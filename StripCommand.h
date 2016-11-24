@@ -17,12 +17,12 @@ class StripCommand
 
     Color GlobalColor;
 
-    //StripLED pixels[];
+    StripLED pixels[];
     
     uint32_t previousColor = 0;
 
-    StripCommand(Adafruit_NeoPixel *myStrip[], uint8_t NOfStrip, uint16_t PixPerStrip[]);
-    void begin();
+    StripCommand(uint8_t NOfStrip, uint16_t PixPerStrip[]);
+    void begin(Adafruit_NeoPixel *Striptable[]);
     
     void fadeToHSV(float H, float S, float V, uint8_t Delay);
     void setToHSV(float H, float S, float V);

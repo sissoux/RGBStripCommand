@@ -1,26 +1,27 @@
 
 #include "StripCommand.h"
 
-StripCommand::StripCommand(Adafruit_NeoPixel *Striptable[], uint8_t NOfStrip, uint16_t PixPerStrip[]): GlobalColor(0, 0, 0)
+StripCommand::StripCommand(uint8_t NOfStrip, uint16_t PixPerStrip[]): GlobalColor(0, 0, 0)
 {
   for (uint8_t n = 0; n < NOfStrip; n++)
   {
     PixelPerStrip[n] = PixPerStrip[n];
-    strip[n] = Striptable[n];
+    strip[n] = 0;//Striptable[n];
     NumberOfPixel = NumberOfPixel + PixelPerStrip[n];
   }
   NumberOfStrip = NOfStrip;
-  /*for (uint8_t p = 0; p < NumberOfPixel; p++)
+  for (uint8_t p = 0; p < NumberOfPixel; p++)
   {
     pixels[p].t = 0;
     pixels[p].GlobalColorPtr = &GlobalColor;
-  }*/
+  }
 }
 
-void StripCommand::begin()
+void StripCommand::begin(Adafruit_NeoPixel *Striptable[])
 {
   for (uint8_t n = 0; n < NumberOfStrip; n++)
   {
+    strip[n] = Striptable[n];
     strip[n]->begin();
   }
 }
@@ -41,24 +42,22 @@ void StripCommand::fadeToRGB(uint16_t R, uint16_t G, uint16_t B, uint8_t Delay)
 {
 
 }
-
+//{method:setToRGB,R:15,G:10,B:120}
 void StripCommand::setToRGB(uint16_t R, uint16_t G, uint16_t B)
 {
+  uint32_t color = Adafruit_NeoPixel::Color(R, G, B);
+  for (uint8_t n = 0; n < NumberOfStrip; n++)
+  {
+    //for (uint8_t p = 0; p < PixelPerStrip[n]; p++)
+    //{
+      strip[n]->setPixelColor(1, color);
+    //}
+    strip[n]->show();
+  }
   Serial.print("Color should be set to: ");
   Serial.print(Adafruit_NeoPixel::Color(R, G, B));
   Serial.print(", Actual value is: ");
   Serial.println(strip[0]->getPixelColor(1));
-  
-  uint32_t color = Adafruit_NeoPixel::Color(R, G, B);
-  for (uint8_t n = 0; n < NumberOfStrip; n++)
-  {
-    for (uint8_t p = 0; p < PixelPerStrip[n]; p++)
-    {
-      strip[n]->setPixelColor(p, color);
-    }
-    strip[n]->show();
-  }
-
 }
 
 /*

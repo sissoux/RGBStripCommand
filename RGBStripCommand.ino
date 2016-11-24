@@ -14,7 +14,7 @@ Adafruit_NeoPixel *stripTable[4];
 
 //StripLED pixel[NumberOfPixels];
 
-StripCommand StripCommander(stripTable, 4, pixPerStrip);
+StripCommand StripCommander(4, pixPerStrip);
 
 DynamicJsonBuffer jsonBuffer;
 char input[100];
@@ -41,7 +41,7 @@ void setup()
   Serial.println("Port Opened.");
 
   Serial.println("Start StripCommander Begin");
-  StripCommander.begin();
+  StripCommander.begin(stripTable);
   Serial.println("StripCommander successfully begun.");
 
 }
