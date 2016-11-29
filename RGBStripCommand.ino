@@ -1,49 +1,41 @@
+// BOF preprocessor bug prevent - insert me on top of your arduino-code
+// From: http://www.a-control.de/arduino-fehler/?lang=en
+#if 1
+__asm volatile ("nop");
+#endif
+
+#include "define.h"
+#include "FastLED.h"
 #include <ArduinoJson.h>
-#include <Adafruit_NeoPixel.h>
 #include "StripLED.h"
 #include "StripCommand.h"
 
-//const uint16_t NumberOfPixels = 56;
+StripCommand StripCommander;
 
-uint16_t pixPerStrip[4] = {14, 14, 14, 14};
-Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(14, 9, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip2 = Adafruit_NeoPixel(14, 10, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip3 = Adafruit_NeoPixel(14, 11, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip4 = Adafruit_NeoPixel(14, 12, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel *stripTable[4];
-
-//StripLED pixel[NumberOfPixels];
-
-StripCommand StripCommander(4, pixPerStrip);
+elapsedMillis RefreshOutputTimer = 0;
+#define OUTPUT_REFRESH_RATE 7
 
 DynamicJsonBuffer jsonBuffer;
 char input[100];
 
+
 void setup()
 {
-  stripTable[0] = &strip1;
-  stripTable[1] = &strip2;
-  stripTable[2] = &strip3;
-  stripTable[3] = &strip4;
+  FastLED.addLeds<NEOPIXEL, 2>(StripCommander.leds, 0, NUM_LEDS_PER_STRIP);
+  FastLED.addLeds<NEOPIXEL, 3>(StripCommander.leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+  FastLED.addLeds<NEOPIXEL, 4>(StripCommander.leds, 2 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+  FastLED.addLeds<NEOPIXEL, 5>(StripCommander.leds, 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
   Serial.begin(115200);
   while (!Serial);
-  // Some example procedures showing how to display to the pixels:
-  /*StripCommander.colorWipe(strip1.Color(255, 0, 0), 50); // Red
-    StripCommander.colorWipe(strip1.Color(0, 255, 0), 50); // Green
-    StripCommander.colorWipe(strip1.Color(0, 0, 255), 50); // Blue
-    StripCommander.theaterChase(strip1.Color(127, 127, 127), 50); // White
-    StripCommander.theaterChase(strip1.Color(127, 0, 0), 50); // Red
-    StripCommander.theaterChase(strip1.Color(0, 0, 127), 50); // Blue
-
-    StripCommander.rainbow(20);
-    StripCommander.rainbowCycle(20);
-    StripCommander.theaterChaseRainbow(50);*/
+#ifdef VERBOSE
   Serial.println("Port Opened.");
-
   Serial.println("Start StripCommander Begin");
-  StripCommander.begin(stripTable);
+#endif
+  StripCommander.begin();
+#ifdef VERBOSE
   Serial.println("StripCommander successfully begun.");
-
+#endif
+  FastLED.show();
 }
 
 void loop()
@@ -54,6 +46,18 @@ void loop()
 void tasker()
 {
   serialParse();
+
+  if (RefreshOutputTimer >= OUTPUT_REFRESH_RATE)
+  {
+    RefreshOutputTimer = 0;
+    StripCommander.dynamicStateUpdate();
+    if (true);//StripCommander.StateChanged)
+    {
+      StripCommander.StateChanged = false;
+      FastLED.show();
+    }
+
+  }
 }
 
 
@@ -84,6 +88,38 @@ void serialParse()
     {
       Serial.println("set to RGB value");
       StripCommander.setToRGB(root["R"], root["G"], root["B"]);
+    }
+    else if (strcmp(method, "setToHSV") == 0)
+    {
+      Serial.println("set to HSV value");
+      StripCommander.setToHSV(root["H"], root["S"], root["V"]);
+    }
+    else if (strcmp(method, "rainbow") == 0)
+    {
+      Serial.println("Rainbow");
+      StripCommander.rainbow();
+    }
+    else if (strcmp(method, "flash") == 0)
+    {
+      Serial.println("Flash");
+      uint8_t FlashCount = random(1, 15);
+      for (uint8_t i = 0; i <= FlashCount; i++)
+      {
+        StripCommander.flash(random(0, NUM_LEDS));
+      }
+    }
+    else if (strcmp(method, "groupFlash") == 0)
+    {
+      uint8_t gr = root["G"];
+      Serial.print("Flash Group");
+      Serial.println(gr);
+      for (uint8_t i = 0; i <= NUM_LEDS; i++)
+      {
+        if (StripCommander.Group[i] = gr)
+        {
+          StripCommander.flash(i);
+        }
+      }
     }
     else
     {
